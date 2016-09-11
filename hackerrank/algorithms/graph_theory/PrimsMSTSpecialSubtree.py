@@ -1,5 +1,7 @@
 from heapq import heappush, heappop
 
+INF = int(10**9)
+
 
 def add_to_heap(heap, src, edges):
     for dst, distance in edges[src].items():
