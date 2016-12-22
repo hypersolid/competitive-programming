@@ -66,7 +66,7 @@ func solve() {
 	fmt.Scanln(&s)
 	s--
 
-	f := bufio.NewWriter(os.Stdout)6
+	f := bufio.NewWriter(os.Stdout)
 	distances := fuse(n, s, edges)
 
 	output := make([]string, 0, n)
