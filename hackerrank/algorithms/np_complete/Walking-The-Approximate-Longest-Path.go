@@ -12,13 +12,15 @@ func connected(connectivity map[int]map[int]struct{}, node1, node2 int) bool {
 }
 
 func main() {
+	// read the inputs
+	rand.Seed(time.Now().UTC().UnixNano())
 	var n, m, node1, node2 int
 	fmt.Scanf("%d %d\n", &n, &m)
-
 	connectivity := make(map[int]map[int]struct{}, n)
-
 	for i := 0; i < m; i++ {
 		fmt.Scanf("%d %d\n", &node1, &node2)
+		node1--
+		node2--
 		if _, ok := connectivity[node1]; !ok {
 			connectivity[node1] = make(map[int]struct{})
 		}
@@ -29,57 +31,60 @@ func main() {
 		connectivity[node2][node1] = struct{}{}
 	}
 
-	rand.Seed(time.Now().UTC().UnixNano())
+	// traverses graph from random point in several directions
+	maxLen := 0
+	maxPath := make([]int, 0)
 	path := make([]int, n)
-	for i := 0; i < n; i++ {
-		path[i] = i
-	}
-	var n1, n2, i1, i2 int
-	for i := 0; i < 1000; i++ {
-		i1 = rand.Intn(n)
-		i2 = rand.Intn(n)
+	iterations := 500000 / n
+	for i := 0; i < iterations; i++ {
+		node := rand.Intn(n)
+		pathLen := 0
+		visited := make([]bool, n)
+		visited[node] = true
+		path[pathLen] = node
+		pathLen++
 
-		if i1 == i2 {
-			continue
+		for direction := 0; direction < 2; direction++ {
+			current := node
+			advanced := true
+			for advanced {
+				advanced = false
+				perm := rand.Perm(len(connectivity[current]))
+				permKeys := make([]int, len(connectivity[current]))
+				i := 0
+				for k := range connectivity[current] {
+					permKeys[perm[i]] = k
+					i++
+				}
+				for _, nextNode := range permKeys {
+					if visited[nextNode] {
+						continue
+					}
+					// prepend or append
+					if direction > 0 {
+						copy(path[1:], path[0:pathLen])
+						path[0] = nextNode
+					} else {
+						path[pathLen] = nextNode
+					}
+					pathLen++
+					current = nextNode
+					visited[current] = true
+					advanced = true
+					break
+				}
+			}
 		}
 
-		n1 = path[i1]
-		n2 = path[i2]
-
-		fmt.Println("indices", i1, i2)
-		fmt.Println("path", path)
-
-		if i1 > 0 {
-			left := path[i1-1]
-			if connected(connectivity, left, n1) && !connected(connectivity, left, n2) {
-				continue
-			}
-			fmt.Println(left, "->", n2)
+		if pathLen > maxLen {
+			maxLen = pathLen
+			maxPath = make([]int, pathLen)
+			copy(maxPath[:], path[:pathLen])
 		}
-		if i1 < n-1 {
-			right := path[i1+1]
-			if connected(connectivity, right, n1) && !connected(connectivity, right, n2) {
-				continue
-			}
-			fmt.Println(right, "->", n2)
-		}
-		fmt.Println("c2")
-		if i2 > 0 {
-			left := path[i2-1]
-			if connected(connectivity, left, n2) && !connected(connectivity, left, n1) {
-				continue
-			}
-			fmt.Println(left, "->", n1)
-		}
-		if i2 < n-1 {
-			right := path[i2+1]
-			if connected(connectivity, right, n2) && !connected(connectivity, right, n1) {
-				continue
-			}
-			fmt.Println(right, "->", n1)
-		}
-		path[i1], path[i2] = path[i2], path[i1]
 	}
 
-	fmt.Println(path)
+	fmt.Println(maxLen)
+	for u := 0; u < maxLen; u++ {
+		fmt.Printf("%d ", maxPath[u]+1)
+	}
 }
