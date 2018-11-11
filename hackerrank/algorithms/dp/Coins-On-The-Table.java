@@ -68,9 +68,14 @@ public class Solution {
     Scanner scanner = new Scanner(System.in);
     T = scanner.nextInt();
 
-    // 1) For each dimension d: use a dynamic programming algorithm to find the number of possible walks for each number of steps. This algorithm focuses on a single dimension. Results saved in, say: result_per_dimension(d, s), d=dimension, s=number_of_steps.
-    // 2) Calculate combinations c(n,k) for n = 0 to M, for k = 0 to n. Results saved in say: c(n,k).
-    // 3) Use another dynamic programing algorithm to calculate the final results, per dimension and per number of steps. results[d,s] = sum{i>=0,i<=s}(c(s,i)*results(d-1,i)*result_per_dimension(d,s-i))
+    // 1) For each dimension d: use a dynamic programming algorithm to find the number of possible
+    // walks for each number of steps. This algorithm focuses on a single dimension. Results saved
+    // in, say: result_per_dimension(d, s), d=dimension, s=number_of_steps.
+    // 2) Calculate combinations c(n,k) for n = 0 to M, for k = 0 to n. Results saved in say:
+    // c(n,k).
+    // 3) Use another dynamic programing algorithm to calculate the final results, per dimension and
+    // per number of steps. results[d,s] =
+    // sum{i>=0,i<=s}(c(s,i)*results(d-1,i)*result_per_dimension(d,s-i))
     // 4) return results(numDimensions, M)
 
     combine(100, 300);

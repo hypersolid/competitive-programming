@@ -3,7 +3,8 @@ import java.util.*;
 
 public class Solution {
 
-  // N.B. The hint provides us with the upper bound estimate, but not the real number of edges in Turan graph
+  // N.B. The hint provides us with the upper bound estimate, but not the real number of edges in
+  // Turan graph
   static double turan(int n, int k) {
     k--;
     if (k < 1) return 0;
