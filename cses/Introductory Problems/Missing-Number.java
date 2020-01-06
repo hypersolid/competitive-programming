@@ -1,18 +1,16 @@
-import java.util.*;
-
 class Wrapper {
-    private static class Solution {
-        Scanner scanner = new Scanner(System.in);
+  public static void main(String[] args) {
+    (new Solution()).solve();
+  }
 
-        public void solve() {
-            int N = scanner.nextInt();
-            long target = N * (N + 1L) / 2L;
-            for (int i = 0; i < N - 1; i++) target -= scanner.nextInt();
-            System.out.println(target);
-        }
-    }
+  private static class Solution {
+    Scanner scanner = new Scanner(System.in);
 
-    public static void main(String[] args) {
-        (new Solution()).solve();
+    public void solve() {
+      int N = scanner.nextInt();
+      long target = N * (N + 1L) / 2L;
+      for (int i = 0; i < N - 1; i++) target -= scanner.nextInt();
+      System.out.println(target);
     }
+  }
 }
