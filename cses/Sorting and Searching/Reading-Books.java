@@ -3,56 +3,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 public class Solution {
-  private static final int IO_BUFFERS = 128 * 1024;
+  private static final int IO_BUFFERS = 1024 * 1024;
   private static FastReader reader = new FastReader();
   private static FastWriter writer = new FastWriter();
 
-  private static int N, X;
-  private static ALP a;
+  private static int N;
+  private static ArrayList<Long> books;
 
   private static void readInput() throws IOException {
     N = reader.nextInt();
-    X = reader.nextInt();
-    a = new ALP();
-    for (int i = 0; i < N; i++) a.add(new Pair(reader.nextInt(), i));
+    books = reader.fillList(new ArrayList<Long>(N), N);
   }
 
   private static void solve() throws IOException {
-    if (N < 4) {
-      writer.println("IMPOSSIBLE");
-      return;
-    }
-
-    Collections.sort(a, (e1, e2) -> Integer.compare(e1.v1, e2.v1));
-
-    for (int i = 0; i < N - 3; i++) {
-      for (int j = i+1; j < N - 2; j++) {
-        int p1 = i;
-        int p2 = j;
-        int p3 = p2 + 1;
-        int p4 = N - 1;
-
-        long partialSum = a.get(p1).v1 + a.get(p2).v1;
-        while (p3 < p4) {
-          long s = partialSum + a.get(p3).v1 + a.get(p4).v1;
-          if (s == X) {
-            writer.print(
-                "%d %d %d %d",
-                a.get(p1).v2 + 1, a.get(p2).v2 + 1, a.get(p3).v2 + 1, a.get(p4).v2 + 1);
-            return;
-          }
-          if (s < X) p3++;
-          else p4--;
-        }
-      }
-    }
-
-    writer.println("IMPOSSIBLE");
+    Stats s = new Stats(books);
+    writer.println((s.max > s.sum / 2 ? 2 * s.max : s.sum));
   }
 
   public static void main(String[] args) {
@@ -119,19 +88,20 @@ public class Solution {
 
   /** Input processing class for competitions */
   static class FastReader {
+    private final int BUFFER_SIZE = 1 << 24;
     private DataInputStream din;
     private byte[] buffer;
     private int bufferPointer, bytesRead;
 
     public FastReader() {
       din = new DataInputStream(System.in);
-      buffer = new byte[Solution.IO_BUFFERS];
+      buffer = new byte[BUFFER_SIZE];
       bufferPointer = bytesRead = 0;
     }
 
     public FastReader(String file_name) throws IOException {
       din = new DataInputStream(new FileInputStream(file_name));
-      buffer = new byte[Solution.IO_BUFFERS];
+      buffer = new byte[BUFFER_SIZE];
       bufferPointer = bytesRead = 0;
     }
 
@@ -194,7 +164,7 @@ public class Solution {
     }
 
     private void fillBuffer() throws IOException {
-      bytesRead = din.read(buffer, bufferPointer = 0, Solution.IO_BUFFERS);
+      bytesRead = din.read(buffer, bufferPointer = 0, BUFFER_SIZE);
       if (bytesRead == -1) buffer[0] = -1;
     }
 
@@ -288,9 +258,6 @@ public class Solution {
 
   /** Alias for ArrayList<Long> */
   static class ALL extends ArrayList<Long> {}
-
-  /** Alias for ArrayList<Pair> */
-  static class ALP extends ArrayList<Pair> {}
 
   /** General purpose Quad utility class */
   static class Quad {

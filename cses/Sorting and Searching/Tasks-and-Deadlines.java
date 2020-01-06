@@ -1,58 +1,31 @@
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Solution {
-  private static final int IO_BUFFERS = 128 * 1024;
-  private static FastReader reader = new FastReader();
-  private static FastWriter writer = new FastWriter();
+  private static FastReader scanner = new FastReader();
+  private static FastWriter log = new FastWriter();
 
-  private static int N, X;
-  private static ALP a;
+  private static int N, T;
+  private static ArrayList<Pair> tasks;
 
   private static void readInput() throws IOException {
-    N = reader.nextInt();
-    X = reader.nextInt();
-    a = new ALP();
-    for (int i = 0; i < N; i++) a.add(new Pair(reader.nextInt(), i));
+    N = scanner.nextInt();
+
+    tasks = scanner.fillPairList(N);
   }
 
   private static void solve() throws IOException {
-    if (N < 4) {
-      writer.println("IMPOSSIBLE");
-      return;
+    Collections.sort(tasks, (a, b) -> Integer.compare(a.val1, b.val1));
+    //    System.out.println(tasks);
+    long result = 0;
+    long time = 0;
+    for (Pair task : tasks) {
+      time += task.val1;
+      result += task.val2 - time;
     }
-
-    Collections.sort(a, (e1, e2) -> Integer.compare(e1.v1, e2.v1));
-
-    for (int i = 0; i < N - 3; i++) {
-      for (int j = i+1; j < N - 2; j++) {
-        int p1 = i;
-        int p2 = j;
-        int p3 = p2 + 1;
-        int p4 = N - 1;
-
-        long partialSum = a.get(p1).v1 + a.get(p2).v1;
-        while (p3 < p4) {
-          long s = partialSum + a.get(p3).v1 + a.get(p4).v1;
-          if (s == X) {
-            writer.print(
-                "%d %d %d %d",
-                a.get(p1).v2 + 1, a.get(p2).v2 + 1, a.get(p3).v2 + 1, a.get(p4).v2 + 1);
-            return;
-          }
-          if (s < X) p3++;
-          else p4--;
-        }
-      }
-    }
-
-    writer.println("IMPOSSIBLE");
+    log.println(result);
   }
 
   public static void main(String[] args) {
@@ -61,77 +34,72 @@ public class Solution {
       int T = 1;
       for (int t = 0; t < T; t++) {
         readInput();
+
         solve();
       }
-      writer.close();
+      log.close();
     } catch (IOException e) {
       throw new RuntimeException(e);
     } catch (NoSuchElementException e) {
       throw new RuntimeException("WRONG INPUT");
     }
-    System.err.println("\ntime: " + (System.currentTimeMillis() - startTime) + "ms");
+    //    System.err.println("\ntime: " + (System.currentTimeMillis() - startTime) + "ms");
   }
 
-  /** Utility class to calculate stats on collection quickly * */
-  static class Stats {
-    long min = Long.MAX_VALUE;
-    long max = Long.MIN_VALUE;
-    long sum = 0;
-
-    public Stats(List<? extends Number> list) {
-      for (Number el : list) process(el.longValue());
-    }
-
-    private void process(long el) {
-      sum += el;
-      min = Math.min(min, el);
-      max = Math.max(max, el);
-    }
-  }
-
-  /** Output processing class for competitions */
+  /** Competition output utility class */
   static class FastWriter {
-    private final StringBuilder out;
+    private final StringBuilder bw;
 
     public FastWriter() {
-      out = new StringBuilder(Solution.IO_BUFFERS);
+      this.bw = new StringBuilder(1 << 24);
     }
 
-    public FastWriter print(Object object) {
-      out.append(object);
-      return this;
+    public void print(Object object) throws IOException {
+      bw.append(object);
     }
 
-    public FastWriter print(String format, Object... args) {
-      out.append(String.format(format, args));
-      return this;
+    public void print(int i) throws IOException {
+      bw.append(i);
     }
 
-    public FastWriter println(Object object) {
-      out.append(object).append("\n");
-      return this;
+    public void print(long i) throws IOException {
+      bw.append(i);
+    }
+
+    public void print(String s) throws IOException {
+      bw.append(s);
+    }
+
+    public void print(String format, Object... args) throws IOException {
+      bw.append(String.format(format, args));
+    }
+
+    public void println(Object object) throws IOException {
+      print(object);
+      print("\n");
     }
 
     public void close() throws IOException {
-      System.out.print(out);
+      System.out.print(bw);
     }
   }
 
-  /** Input processing class for competitions */
+  /** Competition input parser utility class */
   static class FastReader {
+    private final int BUFFER_SIZE = 1 << 24;
     private DataInputStream din;
     private byte[] buffer;
     private int bufferPointer, bytesRead;
 
     public FastReader() {
       din = new DataInputStream(System.in);
-      buffer = new byte[Solution.IO_BUFFERS];
+      buffer = new byte[BUFFER_SIZE];
       bufferPointer = bytesRead = 0;
     }
 
     public FastReader(String file_name) throws IOException {
       din = new DataInputStream(new FileInputStream(file_name));
-      buffer = new byte[Solution.IO_BUFFERS];
+      buffer = new byte[BUFFER_SIZE];
       bufferPointer = bytesRead = 0;
     }
 
@@ -194,7 +162,7 @@ public class Solution {
     }
 
     private void fillBuffer() throws IOException {
-      bytesRead = din.read(buffer, bufferPointer = 0, Solution.IO_BUFFERS);
+      bytesRead = din.read(buffer, bufferPointer = 0, BUFFER_SIZE);
       if (bytesRead == -1) buffer[0] = -1;
     }
 
@@ -208,7 +176,6 @@ public class Solution {
       din.close();
     }
 
-    // TODO
     //    String[] fillStringArray(int n) throws IOException {
     //      String[] array = new String[n];
     //      for (int i = 0; i < n; i++) array[i] = next();
@@ -239,7 +206,7 @@ public class Solution {
     }
   }
 
-  /** Multiset utility class. It's just like TreeSet, but allows duplicate elements * */
+  /** Usefull utility class * */
   static class Multiset extends TreeMap<Long, Long> {
     void add(Long value) {
       Long count = get(value);
@@ -283,64 +250,42 @@ public class Solution {
     }
   }
 
-  /** Alias for ArrayList<Integer> */
   static class ALI extends ArrayList<Integer> {}
 
-  /** Alias for ArrayList<Long> */
-  static class ALL extends ArrayList<Long> {}
-
-  /** Alias for ArrayList<Pair> */
-  static class ALP extends ArrayList<Pair> {}
-
-  /** General purpose Quad utility class */
+  /** General purpose Pair utility class */
   static class Quad {
-    int v1;
-    int v2;
-    int v3;
-    int v4;
+    int val1;
+    int val2;
+    int val3;
+    int val4;
 
-    public Quad(int v1, int v2, int v3, int v4) {
-      this.v1 = v1;
-      this.v2 = v2;
-      this.v3 = v3;
-      this.v4 = v4;
+    public Quad(int val1, int val2, int val3, int val4) {
+      this.val1 = val1;
+      this.val2 = val2;
+      this.val3 = val3;
+      this.val4 = val4;
     }
 
     @java.lang.Override
     public java.lang.String toString() {
-      return "{" + v1 + ", " + v2 + ", " + v3 + ", " + v4 + " }";
-    }
-  }
-
-  /** General purpose Triple utility class */
-  static class Triple {
-    int v1, v2, v3;
-
-    public Triple(int v1, int v2, int v3) {
-      this.v1 = v1;
-      this.v2 = v2;
-      this.v2 = v3;
-    }
-
-    @java.lang.Override
-    public java.lang.String toString() {
-      return "{" + v1 + ", " + v2 + ", " + v3 + " }";
+      return "Quad{" + "val1=" + val1 + ", val2=" + val2 + ", val3=" + val3 + ", val4=" + val4
+          + '}';
     }
   }
 
   /** General purpose Pair utility class */
   static class Pair {
-    int v1;
-    int v2;
+    int val1;
+    int val2;
 
-    public Pair(int v1, int v2) {
-      this.v1 = v1;
-      this.v2 = v2;
+    public Pair(int val1, int val2) {
+      this.val1 = val1;
+      this.val2 = val2;
     }
 
     @java.lang.Override
     public java.lang.String toString() {
-      return "{" + v1 + ", " + v2 + " }";
+      return "Pair{" + "val1=" + val1 + ", val2=" + val2 + '}';
     }
   }
 }
