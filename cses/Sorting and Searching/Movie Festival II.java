@@ -1,58 +1,46 @@
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
 
 public class Solution {
   private static final int IO_BUFFERS = 128 * 1024;
   private static FastReader reader = new FastReader();
   private static FastWriter writer = new FastWriter();
 
-  private static int N, X;
-  private static ALP a;
+  private static int N, K;
+  private static AL<Pair> movies;
 
   private static void readInput() throws IOException {
     N = reader.nextInt();
-    X = reader.nextInt();
-    a = new ALP();
-    for (int i = 0; i < N; i++) a.add(new Pair(reader.nextInt(), i));
+    K = reader.nextInt();
+    movies = new AL<Pair>();
+    for (int i = 0; i < N; i++) {
+      int start = reader.nextInt();
+      int end = reader.nextInt();
+      movies.add(new Pair(end, start));
+    }
   }
 
-  private static void solve() throws IOException {
-    if (N < 4) {
-      writer.println("IMPOSSIBLE");
-      return;
-    }
+  private static void solve() {
+    Collections.sort(movies);
+    TMultiset<Integer> ms = new TMultiset<>();
+    for (int i = 0; i < K; i++) ms.add(0);
 
-    Collections.sort(a, (e1, e2) -> Integer.compare(e1.v1, e2.v1));
+    int counter = 0;
 
-    for (int i = 0; i < N - 3; i++) {
-      for (int j = i+1; j < N - 2; j++) {
-        int p1 = i;
-        int p2 = j;
-        int p3 = p2 + 1;
-        int p4 = N - 1;
-
-        long partialSum = a.get(p1).v1 + a.get(p2).v1;
-        while (p3 < p4) {
-          long s = partialSum + a.get(p3).v1 + a.get(p4).v1;
-          if (s == X) {
-            writer.print(
-                "%d %d %d %d",
-                a.get(p1).v2 + 1, a.get(p2).v2 + 1, a.get(p3).v2 + 1, a.get(p4).v2 + 1);
-            return;
-          }
-          if (s < X) p3++;
-          else p4--;
-        }
+    for (Pair movie : movies) {
+      Integer floor = ms.floorKey(movie.v2);
+      if (floor == null) {
+        continue;
       }
+
+      ms.remove(floor);
+      ms.add(movie.v1);
+
+      counter++;
     }
 
-    writer.println("IMPOSSIBLE");
+    writer.print(counter);
   }
 
   public static void main(String[] args) {
@@ -66,8 +54,6 @@ public class Solution {
       writer.close();
     } catch (IOException e) {
       throw new RuntimeException(e);
-    } catch (NoSuchElementException e) {
-      throw new RuntimeException("WRONG INPUT");
     }
     System.err.println("\ntime: " + (System.currentTimeMillis() - startTime) + "ms");
   }
@@ -215,12 +201,6 @@ public class Solution {
     //      return array;
     //    }
 
-    ArrayList<Pair> fillPairList(int n) throws IOException {
-      ArrayList<Pair> list = new ArrayList<Pair>(n);
-      for (int i = 0; i < n; i++) list.add(new Pair(nextInt(), nextInt()));
-      return list;
-    }
-
     int[] fillIntegerArray(int n) throws IOException {
       int[] array = new int[n];
       for (int i = 0; i < n; i++) array[i] = nextInt();
@@ -233,64 +213,93 @@ public class Solution {
       return array;
     }
 
+    Pair[] fillPairArray(int n) throws IOException {
+      Pair[] array = new Pair[n];
+      for (int i = 0; i < n; i++) array[i] = new Pair(nextInt(), nextInt());
+      return array;
+    }
+
     <T extends List<Long>> T fillList(T list, int n) throws IOException {
       for (int i = 0; i < n; i++) list.add(nextLong());
       return list;
     }
   }
 
-  /** Multiset utility class. It's just like TreeSet, but allows duplicate elements * */
-  static class Multiset extends TreeMap<Long, Long> {
-    void add(Long value) {
-      Long count = get(value);
-      put(value, count == null ? 1 : count + 1);
+  /** HMultiset utility class. It's just like TreeSet, but allows duplicate elements * */
+  static class HMultiset<T> extends HashMap<T, Integer> {
+    void add(T key) {
+      Integer count = get(key);
+      put(key, count == null ? 1 : count + 1);
     }
 
-    @java.lang.Override
-    public Long remove(Object key) {
-      if (!containsKey(key)) return null;
-
-      Long count = get(key);
-      if (count > 1) return put((Long) key, count - 1);
-
-      return super.remove(key);
-    }
-
-    public Long count() {
-      return entrySet().stream().map((v) -> v.getValue()).reduce(0L, Long::sum);
-    }
-  }
-
-  /** Usefull utility class * */
-  static class IMultiset extends TreeMap<Integer, Integer> {
-    void add(Integer value) {
-      Integer count = get(value);
-      put(value, count == null ? 1 : count + 1);
-    }
-
-    @java.lang.Override
+    @SuppressWarnings(value = "unchecked")
+    @Override
     public Integer remove(Object key) {
       if (!containsKey(key)) return null;
 
-      Integer count = get(key);
-      if (count > 1) return put((Integer) key, count - 1);
+      int count = get(key);
+      if (count > 1) return put((T) key, count - 1);
 
       return super.remove(key);
     }
+  }
 
-    public Integer count() {
-      return entrySet().stream().map((v) -> v.getValue()).reduce(0, Integer::sum);
+  /** Tree Multiset utility class * */
+  static class TMultiset<T extends Number> extends TreeMap<T, Integer> {
+    private int size = 0;
+    private T head = null, tail = null;
+
+    void add(T value) {
+      Integer count = get(value);
+      size++;
+      if (count == null) {
+        put(value, 1);
+        recalculateEdges();
+      } else {
+        put(value, count + 1);
+      }
+    }
+
+    private void recalculateEdges() {
+      try {
+        head = firstKey();
+      } catch (NoSuchElementException e) {
+        head = null;
+      }
+      try {
+        tail = lastKey();
+      } catch (NoSuchElementException e) {
+        tail = null;
+      }
+    }
+
+    @SuppressWarnings(value = "unchecked")
+    @Override
+    public Integer remove(Object key) {
+      if (!containsKey(key)) {
+        return null;
+      }
+
+      size--;
+
+      Integer value = get(key);
+      if (value > 1) {
+        return put((T) key, value - 1);
+      }
+
+      Integer result = super.remove(key);
+      recalculateEdges();
+      return result;
+    }
+
+    @java.lang.Override
+    public int size() {
+      return size;
     }
   }
 
-  /** Alias for ArrayList<Integer> */
-  static class ALI extends ArrayList<Integer> {}
-
-  /** Alias for ArrayList<Long> */
-  static class ALL extends ArrayList<Long> {}
-
-  /** Alias for ArrayList<Pair> */
-  static class ALP extends ArrayList<Pair> {}
+  /** Alias for ArrayList */
+  static class AL<T> extends ArrayList<T> {}
 
   /** General purpose Quad utility class */
   static class Quad {
@@ -329,7 +338,7 @@ public class Solution {
   }
 
   /** General purpose Pair utility class */
-  static class Pair {
+  static class Pair implements Comparable<Pair> {
     int v1;
     int v2;
 
@@ -338,9 +347,25 @@ public class Solution {
       this.v2 = v2;
     }
 
+    public boolean equals(Object object) {
+      if (this == object) return true;
+      if (object == null || getClass() != object.getClass()) return false;
+      if (!super.equals(object)) return false;
+      Pair pair = (Pair) object;
+      return v1 == pair.v1 && v2 == pair.v2;
+    }
+
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), v1, v2);
+    }
+
+    public int compareTo(Pair p) {
+      return v1 == p.v1 ? Integer.compare(v2, p.v2) : Integer.compare(v1, p.v1);
+    }
+
     @java.lang.Override
     public java.lang.String toString() {
-      return "{" + v1 + ", " + v2 + " }";
+      return "(" + v1 + ", " + v2 + ")";
     }
   }
 }
